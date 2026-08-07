@@ -65,7 +65,6 @@ SERVICE_NAMES = {
 COUNTRIES = {
     '24': 'Brasil',
     '12': 'EUA',
-    '1': 'Rússia',
     '16': 'Reino Unido',
     '6': 'Canadá',
     '22': 'Alemanha',
@@ -81,7 +80,6 @@ COUNTRIES = {
     '13': 'França',
     '10': 'Itália',
     '5': 'Japão',
-    '8': 'Coreia do Sul',
     '2': 'Ucrânia',
     '15': 'Indonésia',
     '17': 'Turquia',
@@ -141,7 +139,11 @@ class PricingEngine:
         if service in Config.MARKUP_BY_SERVICE:
             return Config.MARKUP_BY_SERVICE[service]
 
-        # 3. Markup global
+        # 3. Verificar markup por país
+        if country in Config.MARKUP_BY_COUNTRY:
+            return Config.MARKUP_BY_COUNTRY[country]
+
+        # 4. Markup global
         return Config.MARKUP_GLOBAL
 
     def calculate_price(self, service: str, country: str = '24') -> float:

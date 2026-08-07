@@ -81,9 +81,9 @@ class Config:
 
     # ---------- Referral (3 níveis) ----------
     REFERRAL_LEVEL_1 = float(os.getenv('REFERRAL_LEVEL_1', '10'))
-    REFERRAL_LEVEL_2 = float(os.getenv('REFERRAL_LEVEL_2', '5'))
-    REFERRAL_LEVEL_3 = float(os.getenv('REFERRAL_LEVEL_3', '2'))
-    REFERRAL_SIGNUP_BONUS = float(os.getenv('REFERRAL_SIGNUP_BONUS', '2.0'))
+    REFERRAL_LEVEL_2 = float(os.getenv('REFERRAL_LEVEL_2', '0'))
+    REFERRAL_LEVEL_3 = float(os.getenv('REFERRAL_LEVEL_3', '0'))
+    REFERRAL_SIGNUP_BONUS = float(os.getenv('REFERRAL_SIGNUP_BONUS', '0'))
 
     # ---------- Markup (lucro) ----------
     MARKUP_GLOBAL = float(os.getenv('MARKUP_GLOBAL', '100'))
@@ -92,6 +92,12 @@ class Config:
         if ':' in _kv:
             _k, _v = _kv.strip().split(':', 1)
             MARKUP_BY_SERVICE[_k] = float(_v)
+
+    MARKUP_BY_COUNTRY = {}
+    for _kv in os.getenv('MARKUP_BY_COUNTRY', '').split(','):
+        if ':' in _kv:
+            _k, _v = _kv.strip().split(':', 1)
+            MARKUP_BY_COUNTRY[_k] = float(_v)
 
     # ---------- Suporte ----------
     SUPPORT_USERNAME = os.getenv('SUPPORT_USERNAME', '')

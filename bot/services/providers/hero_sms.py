@@ -41,35 +41,33 @@ SERVICE_CODE_MAP = {
     'ot': 'ot',      # Outros
 }
 
-# Mapeamento de países (código SMS-Activate -> código HeroSMS)
-# HeroSMS usa os mesmos códigos numéricos do SMS-Activate
+# Mapeamento de países (nosso código interno SMS-Activate -> ID real da HeroSMS)
+# IDs confirmados via getCountries da HeroSMS (08/2026)
 COUNTRY_CODE_MAP = {
-    '24': '24',  # Brasil
-    '12': '12',  # EUA
-    '1': '1',    # Rússia
-    '16': '16',  # Reino Unido
-    '6': '6',    # Canadá
-    '22': '22',  # Alemanha
-    '4': '4',    # Austrália
-    '9': '9',    # China
-    '14': '14',  # Índia
-    '23': '23',  # México
-    '7': '7',    # Chile
-    '29': '29',  # Argentina
-    '25': '25',  # Colômbia
-    '30': '30',  # Peru
-    '3': '3',    # Espanha
-    '13': '13',  # França
-    '10': '10',  # Itália
-    '5': '5',    # Japão
-    '8': '8',    # Coreia do Sul
-    '2': '2',    # Ucrânia
-    '15': '15',  # Indonésia
-    '17': '17',  # Turquia
-    '18': '18',  # Vietnã
-    '19': '19',  # África do Sul
-    '20': '20',  # Portugal
-    '21': '21',  # Polônia
+    '24': '73',   # Brasil
+    '12': '187',  # EUA
+    '16': '16',   # Reino Unido
+    '6': '36',    # Canadá
+    '22': '43',   # Alemanha
+    '4': '175',   # Austrália
+    '9': '3',     # China
+    '14': '22',   # Índia
+    '23': '54',   # México
+    '7': '151',   # Chile
+    '29': '39',   # Argentina
+    '25': '33',   # Colômbia
+    '30': '65',   # Peru
+    '3': '56',    # Espanha
+    '13': '78',   # França
+    '10': '86',   # Itália
+    '5': '182',   # Japão
+    '15': '6',    # Indonésia
+    '17': '62',   # Turquia
+    '18': '10',   # Vietnã
+    '19': '31',   # África do Sul
+    '20': '117',  # Portugal
+    '21': '15',   # Polônia
+    '2': '1',     # Ucrânia
 }
 
 # Preços base referenciais (USD) — serão substituídos pela consulta em tempo real
