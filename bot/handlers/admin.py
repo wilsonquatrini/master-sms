@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 
 from telegram import Update
+from telegram.helpers import escape
 from telegram.constants import ParseMode
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 
@@ -84,22 +85,22 @@ async def admin_stats_callback(update: Update, context: CallbackContext):
     total_provider_balance = sum(b for b in balances.values() if b is not None)
 
     text = (
-        "📊 *Estatísticas*\n\n"
-        f"👥 *Usuários*\n"
-        f"• Total: {stats['total_users']}\n"
-        f"• Saldo positivo: R$ {stats['total_balance']:.2f}\n\n"
-        f"📱 *Vendas*\n"
-        f"• Hoje: {stats['today_sales']} (R$ {stats['today_revenue']:.2f})\n"
-        f"• Total: {stats['total_sales']} (R$ {stats['total_revenue']:.2f})\n\n"
-        f"🏦 *Fornecedores (saldo USD)*\n"
+        "📊 <b>Estatísticas</b>\\n\\n"
+        f"👥 <b>Usuários</b>\\n"
+        f"• Total: {stats['total_users']}\\n"
+        f"• Saldo positivo: R$ {stats['total_balance']:.2f}\\n\\n"
+        f"📱 <b>Vendas</b>\\n"
+        f"• Hoje: {stats['today_sales']} (R$ {stats['today_revenue']:.2f})\\n"
+        f"• Total: {stats['total_sales']} (R$ {stats['total_revenue']:.2f})\\n\\n"
+        f"🏦 <b>Fornecedores (saldo USD)</b>\\n"
     )
     for provider_name, bal in balances.items():
         bal_str = f"${bal:.2f}" if bal is not None else "❌ erro"
-        text += f"• {provider_name}: *{bal_str}*\n"
+        text += f"• {escape(provider_name)}: <b>{bal_str}</b>\\n"
 
     await query.edit_message_text(
         text,
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode=ParseMode.HTML,
         reply_markup=Keyboards.admin_menu(),
     )
 
