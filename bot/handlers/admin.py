@@ -73,8 +73,13 @@ async def admin_stats_callback(update: Update, context: CallbackContext):
         return
     await query.answer()
 
-    stats = db.get_stats()
-    balances = provider_manager.get_balance()
+    # Chamadas bloqueantes (DB/API) rodam em thread p/ não travar o bot
+    stats = await asyncio.to_thread(db.get_stats)
+    try:
+        balances = await asyncio.to_thread(provider_manager.get_balance)
+    except Exception as e:
+        logger.error(f"get_balance error: {e}", exc_info=True)
+        balances = {}
     total_provider_balance = sum(b for b in balances.values() if b is not None)
 
     text = (
