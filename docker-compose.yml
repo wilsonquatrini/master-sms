@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: master-sms-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
+    command: python bot/main.py
+
+  worker:
+    build: .
+    container_name: master-sms-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    command: python worker.py
+
+  webhook:
+    build: .
+    container_name: master-sms-webhook
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+    command: gunicorn --bind 0.0.0.0:5000 --workers 2 webhook_server:app
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: master-sms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: master_sms
+      POSTGRES_USER: master
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-master_secret_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U master -d master_sms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
