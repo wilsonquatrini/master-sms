@@ -10,8 +10,6 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
-    ports:
-      - "8080:8080"
     volumes:
       - ./logs:/app/logs
     command: python bot/main.py
@@ -34,8 +32,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     volumes:
       - ./logs:/app/logs
     command: gunicorn --bind 0.0.0.0:5000 --workers 2 webhook_server:app
