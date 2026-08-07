@@ -12,6 +12,7 @@ from bot.database import db
 from bot.keyboards import Keyboards
 from bot.services.pricing import pricing, COUNTRIES
 from bot.services.providers import provider_manager
+from bot.async_utils import run_blocking
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,24 @@ async def country_page_callback(update: Update, context: CallbackContext):
     )
 
 
+def _build_country_services(country_code: str):
+    """Síncrono: consulta disponibilidade + preços de um país (roda em thread)."""
+    try:
+        status = provider_manager.get_services_by_country(country_code)
+    except Exception:
+        status = {}
+
+    services_list = []
+    for svc_code in sorted(pricing.BASE_PRICES.keys()):
+        svc_name = pricing.get_service_name(svc_code)
+        price = pricing.calculate_price(svc_code, country_code)
+        qty = 0
+        if status and isinstance(status, dict):
+            qty = status.get(svc_code, 0)
+        services_list.append((svc_code, svc_name, price, qty))
+    return status, services_list
+
+
 async def country_selected_callback(update: Update, context: CallbackContext):
     """Callback quando um país é selecionado — mostra serviços disponíveis."""
     query = update.callback_query
@@ -102,21 +121,8 @@ async def country_selected_callback(update: Update, context: CallbackContext):
     # Salvar país selecionado na sessão do usuário
     context.user_data['selected_country'] = country_code
 
-    # Consultar disponibilidade de serviços neste país
-    try:
-        status = provider_manager.get_services_by_country(country_code)
-    except Exception:
-        status = {}
-
-    # Montar lista de serviços com disponibilidade e preços
-    services_list = []
-    for svc_code in sorted(pricing.BASE_PRICES.keys()):
-        svc_name = pricing.get_service_name(svc_code)
-        price = pricing.calculate_price(svc_code, country_code)
-        qty = 0
-        if status and isinstance(status, dict):
-            qty = status.get(svc_code, 0)
-        services_list.append((svc_code, svc_name, price, qty))
+    # Consultar disponibilidade + preços (bloqueante) em thread única
+    status, services_list = await run_blocking(_build_country_services, country_code)
 
     # Contar quantos disponíveis
     available_count = sum(1 for _, _, _, q in services_list if q > 0)

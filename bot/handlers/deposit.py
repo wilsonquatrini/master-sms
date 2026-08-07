@@ -13,6 +13,7 @@ from bot.database import db
 from bot.keyboards import Keyboards
 from bot.config import Config
 from bot.services.pix import pix
+from bot.async_utils import run_blocking
 
 logger = logging.getLogger(__name__)
 
@@ -108,8 +109,8 @@ async def _process_deposit(query, user, amount: float):
     db_user = db.get_user(user.id)
     unique_id = db_user.referral_code if db_user else f"USR{user.id}"
 
-    # Tenta Mercado Pago, depois Pluggy, depois manual
-    result = pix.create_pix(amount, user.id, unique_id)
+    # Tenta Mercado Pago, depois Pluggy, depois manual (rede -> thread)
+    result = await run_blocking(pix.create_pix, amount, user.id, unique_id)
 
     if not result:
         # Falhou tudo
@@ -179,8 +180,8 @@ async def _process_deposit_message(msg, user, amount: float):
     db_user = db.get_user(user.id)
     unique_id = db_user.referral_code if db_user else f"USR{user.id}"
 
-    # Tenta Mercado Pago, depois Pluggy, depois manual
-    result = pix.create_pix(amount, user.id, unique_id)
+    # Tenta Mercado Pago, depois Pluggy, depois manual (rede -> thread)
+    result = await run_blocking(pix.create_pix, amount, user.id, unique_id)
 
     if not result:
         await msg.reply_text(

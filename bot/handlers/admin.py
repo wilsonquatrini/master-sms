@@ -15,6 +15,7 @@ from bot.keyboards import Keyboards
 from bot.config import Config
 from bot.services.providers import provider_manager
 from bot.services.pricing import pricing
+from bot.async_utils import run_blocking
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ async def admin_command(update: Update, context: CallbackContext):
         )
         return
 
-    stats = db.get_stats()
+    stats = await run_blocking(db.get_stats)
 
     text = (
         "👨‍💼 *Painel do Administrador*\n\n"
@@ -103,15 +104,8 @@ async def admin_stats_callback(update: Update, context: CallbackContext):
     )
 
 
-async def admin_prices_callback(update: Update, context: CallbackContext):
-    """Mostra gestão de preços."""
-    query = update.callback_query
-    user = update.effective_user
-    if not is_admin(user.id):
-        await query.answer("Acesso negado")
-        return
-    await query.answer()
-
+def _build_admin_prices_text() -> str:
+    """Síncrono: monta texto de preços (roda em thread — chama API)."""
     rules = db.get_all_price_rules()
 
     text = (
@@ -136,6 +130,19 @@ async def admin_prices_callback(update: Update, context: CallbackContext):
         f"Use /preco <servico> <markup%> para definir\n"
         f"Ex: `/preco wa 150` (WhatsApp com 150% de markup)"
     )
+    return text
+
+
+async def admin_prices_callback(update: Update, context: CallbackContext):
+    """Mostra gestão de preços."""
+    query = update.callback_query
+    user = update.effective_user
+    if not is_admin(user.id):
+        await query.answer("Acesso negado")
+        return
+    await query.answer()
+
+    text = await run_blocking(_build_admin_prices_text)
 
     await query.edit_message_text(
         text,
@@ -171,7 +178,7 @@ async def set_price_command(update: Update, context: CallbackContext):
 
     db.set_price_rule(service, markup)
     name = pricing.get_service_name(service)
-    new_price = pricing.calculate_price(service)
+    new_price = await run_blocking(pricing.calculate_price, service)
 
     await update.message.reply_text(
         f"✅ *Preço atualizado!*\n\n"
@@ -528,7 +535,7 @@ async def admin_back_callback(update: Update, context: CallbackContext):
         return
     await query.answer()
 
-    stats = db.get_stats()
+    stats = await run_blocking(db.get_stats)
     text = (
         "👨‍💼 *Painel do Administrador*\n\n"
         f"👥 Usuários: *{stats['total_users']}*\n"

@@ -16,6 +16,7 @@ from bot.services.providers import provider_manager
 from bot.services.providers.base import ProviderError, InsufficientBalanceError
 from bot.services.pricing import pricing
 from bot.services.referral import referral_service
+from bot.async_utils import run_blocking
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ async def comprar_command(update: Update, context: CallbackContext):
     user = update.effective_user
     _SERVICE_PAGE[user.id] = 0
 
-    services = pricing.get_all_services()
+    services = await run_blocking(pricing.get_all_services)
     _services_cache[user.id] = services
 
     text = (
@@ -55,7 +56,7 @@ async def comprar_callback(update: Update, context: CallbackContext):
     data = query.data
 
     if data == 'comprar':
-        services = pricing.get_all_services()
+        services = await run_blocking(pricing.get_all_services)
         _services_cache[user.id] = services
         _SERVICE_PAGE[user.id] = 0
 
@@ -71,7 +72,10 @@ async def comprar_callback(update: Update, context: CallbackContext):
     if data.startswith('page_'):
         page = int(data.split('_')[1])
         _SERVICE_PAGE[user.id] = page
-        services = _services_cache.get(user.id, pricing.get_all_services())
+        services = _services_cache.get(user.id)
+        if services is None:
+            services = await run_blocking(pricing.get_all_services)
+            _services_cache[user.id] = services
         await query.edit_message_reply_markup(
             reply_markup=Keyboards.purchase_services(services, page),
         )
@@ -103,8 +107,8 @@ async def _process_purchase(query, user, service_code: str, country_code: str = 
         )
         return
 
-    # Calcular preço
-    price = pricing.calculate_price(service_code, country_code)
+    # Calcular preço (rede/DB -> thread para não travar)
+    price = await run_blocking(pricing.calculate_price, service_code, country_code)
     service_name = pricing.get_service_name(service_code)
     country_name = pricing.get_country_name(country_code)
 
@@ -150,7 +154,7 @@ async def confirm_purchase(update: Update, context: CallbackContext):
 
     db_user = db.get_user(user.id)
     country_code = context.user_data.get('selected_country', Config.DEFAULT_COUNTRY)
-    price = pricing.calculate_price(service_code, country_code)
+    price = await run_blocking(pricing.calculate_price, service_code, country_code)
     service_name = pricing.get_service_name(service_code)
     country_name = pricing.get_country_name(country_code)
 
@@ -172,7 +176,7 @@ async def confirm_purchase(update: Update, context: CallbackContext):
 
     try:
         # Solicitar número — ProviderManager tenta do mais barato primeiro
-        result = provider_manager.get_number(service_code, country_code)
+        result = await run_blocking(provider_manager.get_number, service_code, country_code)
 
         if not result:
             await query.edit_message_text(
@@ -291,13 +295,9 @@ async def check_sms_callback(update: Update, context: CallbackContext):
     await query.answer()
 
     purchase_id = int(query.data.split('_')[1])
-    purchase = db.get_purchase_by_activation(
-        db.get_user_purchases(update.effective_user.id, 50)[0].activation_id
-    )
 
-    # Procurar a compra
-    # (simplificado: buscar no banco pelo id)
     from bot.database import SMSPurchase
+    purchase = None
     with db.session() as s:
         purchase = s.query(SMSPurchase).filter_by(id=purchase_id).first()
 
@@ -319,7 +319,7 @@ async def check_sms_callback(update: Update, context: CallbackContext):
         return
 
     # Verificar na API
-    status = provider_manager.get_status(purchase.activation_id, getattr(purchase, 'provider', None))
+    status = await run_blocking(provider_manager.get_status, purchase.activation_id, getattr(purchase, 'provider', None))
     if status and status not in ('CANCELLED', None):
         # SMS recebido!
         db.update_sms_purchase(purchase.id, sms_code=status, status='received')
@@ -358,7 +358,7 @@ async def _wait_for_sms(purchase_id: int, user_id: int, context: CallbackContext
             if not purchase or purchase.status == 'received':
                 return
 
-        status = provider_manager.get_status(purchase.activation_id, getattr(purchase, 'provider', None))
+        status = await run_blocking(provider_manager.get_status, purchase.activation_id, getattr(purchase, 'provider', None))
         if status and status not in ('CANCELLED', None):
             db.update_sms_purchase(purchase_id, sms_code=status, status='received')
 
