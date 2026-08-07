@@ -26,9 +26,12 @@ _admin_ctx = {}
 
 
 def is_admin(user_id: int) -> bool:
-    """Verifica se usuário é admin."""
+    """Verifica se usuário é admin. ADMIN_IDS sempre concede admin."""
+    # Sempre concede admin se o ID estiver na lista de administradores (env)
+    if user_id in Config.ADMIN_IDS:
+        return True
     user = db.get_user(user_id)
-    return user.is_admin if user else (user_id in Config.ADMIN_IDS)
+    return user.is_admin if user else False
 
 
 async def admin_command(update: Update, context: CallbackContext):
