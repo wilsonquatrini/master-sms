@@ -99,8 +99,15 @@ class Config:
             _k, _v = _kv.strip().split(':', 1)
             MARKUP_BY_COUNTRY[_k] = float(_v)
 
-    # Desconto de fidelidade do provider (0 = nenhum, 0.60 = 60%). Reduz o CUSTO REAL.
+    # Desconto de fidelidade por provider (0 = nenhum, 0.60 = 60%). Reduz o CUSTO REAL.
+    # Fallback global:
     LOYALTY_DISCOUNT = float(os.getenv('LOYALTY_DISCOUNT', '0.10'))
+    # Por provider: "hero_sms:0.10,five_sim:0.0" (cada provider tem seu nível próprio)
+    LOYALTY_BY_PROVIDER = {}
+    for _kv in os.getenv('LOYALTY_DISCOUNT_BY_PROVIDER', '').split(','):
+        if ':' in _kv:
+            _k, _v = _kv.strip().split(':', 1)
+            LOYALTY_BY_PROVIDER[_k.strip()] = float(_v)
     # Custo de carregar saldo no provider via cripto (taxa, ex: 2% = 0.02)
     LOADING_FEE = float(os.getenv('LOADING_FEE', '0.02'))
     # Cotação do dólar (USD->BRL) — atualizar conforme o mercado

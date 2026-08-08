@@ -87,6 +87,7 @@ class HeroSMSProvider(SMSProvider):
     def __init__(self):
         self.api_key = Config.HEROSMS_API_KEY
         self.base_url = Config.HEROSMS_BASE_URL
+        self.loyalty_discount = Config.LOYALTY_BY_PROVIDER.get('hero_sms', Config.LOYALTY_DISCOUNT)
         # Cache de preços: {(service, country): (timestamp, price_usd)}
         self._price_cache = {}
         # Cache de ações/disponibilidade por país: {country: (timestamp, {svc: qty})}

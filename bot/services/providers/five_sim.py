@@ -90,6 +90,7 @@ class FiveSimProvider(SMSProvider):
         self.api_key = Config.FIVESIM_API_KEY
         self.base_url = Config.FIVESIM_BASE_URL
         self._price_cache = {}
+        self.loyalty_discount = Config.LOYALTY_BY_PROVIDER.get('five_sim', Config.LOYALTY_DISCOUNT)
 
     @property
     def name(self) -> str:

@@ -225,8 +225,24 @@ class PricingEngine:
         = base_cost * (1 - LOYALTY_DISCOUNT) * (1 + LOADING_FEE) * taxa.
         O desconto da fidelidade = margem extra; a taxa de carregamento = custo.
         """
-        base = self.get_base_price(service, country) or 0
-        return base * (1 - Config.LOYALTY_DISCOUNT) * (1 + Config.LOADING_FEE) * USD_TO_BRL
+        # Menor custo REAL entre providers: preço de cada provider * (1 - desconto DAQUELE provider)
+        best_usd = None
+        for p in provider_manager.providers:
+            price = None
+            try:
+                price = p.get_price(service, country)
+            except Exception:
+                pass
+            if price is None:
+                continue
+            d = getattr(p, 'loyalty_discount', Config.LOYALTY_DISCOUNT)
+            eff = price * (1 - d)
+            if best_usd is None or eff < best_usd:
+                best_usd = eff
+        if best_usd is None:
+            base = self.get_base_price(service, country) or 0
+            best_usd = base * (1 - Config.LOYALTY_DISCOUNT)
+        return best_usd * (1 + Config.LOADING_FEE) * USD_TO_BRL
 
     def get_provider_details(self, service: str, country: str = '24') -> dict:
         """
