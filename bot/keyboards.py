@@ -47,10 +47,9 @@ class Keyboards:
         return InlineKeyboardMarkup(kb)
 
     @staticmethod
-    def countries_list(countries: list, page: int = 0, items_per_page: int = 8):
+    def countries_list(countries: list, page: int = 0, items_per_page: int = 24):
         """
-        Gera teclado de países com paginação.
-        countries: list of (code, name, available)
+        Gera teclado de países com 2 colunas (bandeira + nome).
         """
         total_pages = (len(countries) - 1) // items_per_page + 1 if countries else 1
         start = page * items_per_page
@@ -58,15 +57,15 @@ class Keyboards:
         page_countries = countries[start:end]
 
         kb = []
+        row = []
         for code, name, available in page_countries:
-            status = "🟢" if available else "⚪"
             flag = pricing.get_country_flag(code)
-            kb.append([
-                InlineKeyboardButton(
-                    f"{status} {flag} {name}",
-                    callback_data=f"cntry_{code}"
-                )
-            ])
+            row.append(InlineKeyboardButton(f"{flag} {name}", callback_data=f"cntry_{code}"))
+            if len(row) == 2:
+                kb.append(row)
+                row = []
+        if row:
+            kb.append(row)
 
         # Paginação
         nav = []

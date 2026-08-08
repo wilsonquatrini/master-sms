@@ -101,8 +101,8 @@ def _build_country_services(country_code: str):
         status = {}
     status = status or {}
 
-    # Códigos = serviços conhecidos (BASE_PRICES) + disponíveis no provider (catálogo dinâmico)
-    all_codes = set(pricing.BASE_PRICES.keys()) | set(status.keys())
+    # Códigos = serviços conhecidos + os principais (99/iFood só se disponíveis)
+    all_codes = set(pricing.BASE_PRICES.keys()) | {c for c in FEATURED_SERVICES if c in status}
 
     def order_key(code):
         if code in FEATURED_SERVICES:

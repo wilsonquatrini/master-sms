@@ -243,10 +243,6 @@ class HeroSMSProvider(SMSProvider):
                     qty = data.get(hs_code, 0)
                     if isinstance(qty, (int, float)) and qty > 0:
                         result[our_code] = int(qty)
-                # incluir códigos nativos não mapeados (catálogo dinâmico)
-                for k, v in data.items():
-                    if isinstance(v, (int, float)) and int(v) > 0 and k not in result:
-                        result[k] = int(v)
                 self._status_cache[hs_country] = (now, result)
                 return result
             return {}
