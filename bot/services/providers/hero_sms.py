@@ -5,6 +5,7 @@ https://hero-sms.com
 
 import json
 import logging
+import os
 import time
 from typing import Optional, Dict
 
@@ -92,7 +93,8 @@ class HeroSMSProvider(SMSProvider):
         self._status_cache = {}
         self._country_names = None  # cache do getCountries
         self._country_names_ts = 0
-        self.TTL = 60  # segundos
+        # TTL do cache do catálogo (padrão 120s) — reduz chamadas à API em volume
+        self.TTL = int(os.getenv('HEROSMS_TTL', '120'))
 
     @property
     def name(self) -> str:
