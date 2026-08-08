@@ -59,6 +59,8 @@ SERVICE_NAMES = {
     'vk': 'VKontakte',
     'ya': 'Yandex',
     'ot': 'Outros',
+    '99': '99 (Moto/Táxi)',
+    'ifood': 'iFood',
 }
 
 # Países disponíveis com código ISO

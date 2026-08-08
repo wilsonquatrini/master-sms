@@ -90,20 +90,33 @@ async def country_page_callback(update: Update, context: CallbackContext):
     )
 
 
+FEATURED_SERVICES = ['wa', 'tg', 'ub', '99', 'ifood']  # WhatsApp, Telegram, Uber, 99, iFood (1ª página)
+
+
 def _build_country_services(country_code: str):
     """Síncrono: consulta disponibilidade + preços de um país (roda em thread)."""
     try:
         status = provider_manager.get_services_by_country(country_code)
     except Exception:
         status = {}
+    status = status or {}
+
+    # Códigos = serviços conhecidos (BASE_PRICES) + disponíveis no provider (catálogo dinâmico)
+    all_codes = set(pricing.BASE_PRICES.keys()) | set(status.keys())
+
+    def order_key(code):
+        if code in FEATURED_SERVICES:
+            return FEATURED_SERVICES.index(code)
+        return len(FEATURED_SERVICES) + sorted(all_codes).index(code)
 
     services_list = []
-    for svc_code in sorted(pricing.BASE_PRICES.keys()):
+    for svc_code in sorted(all_codes, key=order_key):
         svc_name = pricing.get_service_name(svc_code)
-        price = pricing.calculate_price(svc_code, country_code)
-        qty = 0
-        if status and isinstance(status, dict):
-            qty = status.get(svc_code, 0)
+        try:
+            price = pricing.calculate_price(svc_code, country_code)
+        except Exception:
+            price = 0.0
+        qty = status.get(svc_code, 0)
         services_list.append((svc_code, svc_name, price, qty))
     return status, services_list
 

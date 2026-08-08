@@ -5,6 +5,7 @@ https://hero-sms.com
 
 import json
 import logging
+import time
 from typing import Optional, Dict
 
 import requests
@@ -85,8 +86,13 @@ class HeroSMSProvider(SMSProvider):
     def __init__(self):
         self.api_key = Config.HEROSMS_API_KEY
         self.base_url = Config.HEROSMS_BASE_URL
-        # Cache de preços: {(service, country): price_usd}
+        # Cache de preços: {(service, country): (timestamp, price_usd)}
         self._price_cache = {}
+        # Cache de ações/disponibilidade por país: {country: (timestamp, {svc: qty})}
+        self._status_cache = {}
+        self._country_names = None  # cache do getCountries
+        self._country_names_ts = 0
+        self.TTL = 60  # segundos
 
     @property
     def name(self) -> str:
@@ -222,18 +228,26 @@ class HeroSMSProvider(SMSProvider):
 
     def get_services_by_country(self, country: str) -> Dict[str, int]:
         hs_country = COUNTRY_CODE_MAP.get(country, country)
+        now = time.time()
+        cached = self._status_cache.get(hs_country)
+        if cached and now - cached[0] < self.TTL:
+            return cached[1]
         try:
             data = self._request_json({
                 'action': 'getNumbersStatus',
                 'country': hs_country,
             })
             if data and isinstance(data, dict):
-                # Mapear de volta para nossos códigos
                 result = {}
                 for our_code, hs_code in SERVICE_CODE_MAP.items():
                     qty = data.get(hs_code, 0)
                     if isinstance(qty, (int, float)) and qty > 0:
                         result[our_code] = int(qty)
+                # incluir códigos nativos não mapeados (catálogo dinâmico)
+                for k, v in data.items():
+                    if isinstance(v, (int, float)) and int(v) > 0 and k not in result:
+                        result[k] = int(v)
+                self._status_cache[hs_country] = (now, result)
                 return result
             return {}
         except Exception as e:
@@ -251,8 +265,10 @@ class HeroSMSProvider(SMSProvider):
         Retorna preço em USD.
         """
         cache_key = (service, country)
-        if cache_key in self._price_cache:
-            return self._price_cache[cache_key]
+        now = time.time()
+        cached = self._price_cache.get(cache_key)
+        if cached and now - cached[0] < self.TTL:
+            return cached[1]
 
         hs_service = SERVICE_CODE_MAP.get(service, service)
         hs_country = COUNTRY_CODE_MAP.get(country, country)
@@ -270,7 +286,7 @@ class HeroSMSProvider(SMSProvider):
                 if isinstance(country_data, dict):
                     price = country_data.get('price')
                     if price:
-                        self._price_cache[cache_key] = float(price)
+                        self._price_cache[cache_key] = (now, float(price))
                         return float(price)
         except Exception:
             pass
@@ -278,5 +294,5 @@ class HeroSMSProvider(SMSProvider):
         # Fallback
         price = FALLBACK_PRICES.get(service)
         if price:
-            self._price_cache[cache_key] = price
+            self._price_cache[cache_key] = (time.time(), price)
         return price
