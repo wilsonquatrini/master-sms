@@ -92,6 +92,34 @@ COUNTRIES = {
 # Taxa de câmbio USD -> BRL
 USD_TO_BRL = 5.50
 
+# Bandeiras dos países (emoji) — exibidas na interface, igual ao Notz
+COUNTRY_FLAGS = {
+    '24': '🇧🇷',  # Brasil
+    '12': '🇺🇸',  # EUA
+    '16': '🇬🇧',  # Reino Unido
+    '6': '🇨🇦',   # Canadá
+    '22': '🇩🇪',  # Alemanha
+    '4': '🇦🇺',   # Austrália
+    '9': '🇨🇳',   # China
+    '14': '🇮🇳',  # Índia
+    '23': '🇲🇽',  # México
+    '7': '🇨🇱',   # Chile
+    '29': '🇦🇷',  # Argentina
+    '25': '🇨🇴',  # Colômbia
+    '30': '🇵🇪',  # Peru
+    '3': '🇪🇸',   # Espanha
+    '13': '🇫🇷',  # França
+    '10': '🇮🇹',  # Itália
+    '5': '🇯🇵',   # Japão
+    '15': '🇮🇩',  # Indonésia
+    '17': '🇹🇷',  # Turquia
+    '18': '🇻🇳',  # Vietnã
+    '19': '🇿🇦',  # África do Sul
+    '20': '🇵🇹',  # Portugal
+    '21': '🇵🇱',  # Polônia
+    '2': '🇺🇦',   # Ucrânia
+}
+
 
 class PricingEngine:
     """
@@ -166,6 +194,9 @@ class PricingEngine:
 
     def get_country_name(self, country_code: str) -> str:
         return COUNTRIES.get(country_code, f'Código {country_code}')
+
+    def get_country_flag(self, country_code: str) -> str:
+        return COUNTRY_FLAGS.get(country_code, '🌐')
 
     def get_all_services(self) -> list:
         """Lista de todos os serviços disponíveis."""

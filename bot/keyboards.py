@@ -4,6 +4,8 @@ Teclados inline do bot.
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.services.pricing import pricing
+
 
 class Keyboards:
     """Constrói teclados reutilizáveis."""
@@ -58,9 +60,10 @@ class Keyboards:
         kb = []
         for code, name, available in page_countries:
             status = "🟢" if available else "⚪"
+            flag = pricing.get_country_flag(code)
             kb.append([
                 InlineKeyboardButton(
-                    f"{status} {name}",
+                    f"{status} {flag} {name}",
                     callback_data=f"cntry_{code}"
                 )
             ])

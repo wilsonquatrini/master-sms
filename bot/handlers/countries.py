@@ -58,7 +58,7 @@ async def _show_countries(reply_func, user, context: CallbackContext):
         "Selecione um país para ver os serviços disponíveis:\\n"
         "🟢 = tem números disponíveis\\n"
         "⚪ = disponibilidade não verificada\\n\\n"
-        f"*País atual:* {pricing.get_country_name(context.user_data.get('selected_country', '24'))}\\n"
+        f"*País atual:* {pricing.get_country_flag(context.user_data.get('selected_country', '24'))} {pricing.get_country_name(context.user_data.get('selected_country', '24'))}\n"
         f"*Total de países:* {len(countries_with_status)}"
     )
 
@@ -129,7 +129,7 @@ async def country_selected_callback(update: Update, context: CallbackContext):
     total_count = len(services_list)
 
     text = (
-        f"🌍 *{country_name}*\\n\\n"
+        f"🌍 {pricing.get_country_flag(country_code)} *{country_name}*\n\n"
         f"📱 *Serviços disponíveis:* {available_count}/{total_count}\\n"
         f"💰 *Moeda:* R$ (BRL)\\n\\n"
         f"👇 Selecione o serviço desejado:\\n"
