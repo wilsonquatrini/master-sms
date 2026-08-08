@@ -53,13 +53,12 @@ async def _show_countries(reply_func, user, context: CallbackContext):
     _COUNTRY_LIST_CACHE[user.id] = countries_with_status
 
     page = _COUNTRY_PAGE.get(user.id, 0)
+    sel = context.user_data.get('selected_country') or '24'
     text = (
-        "🌍 *Países Disponíveis*\\n\\n"
-        "Selecione um país para ver os serviços disponíveis:\\n"
-        "🟢 = tem números disponíveis\\n"
-        "⚪ = disponibilidade não verificada\\n\\n"
-        f"*País atual:* {pricing.get_country_flag(context.user_data.get('selected_country', '24'))} {pricing.get_country_name(context.user_data.get('selected_country', '24'))}\n"
-        f"*Total de países:* {len(countries_with_status)}"
+        "🌍 *Países Disponíveis*\n\n"
+        "Toque em um país para ver os serviços e preços dele.\n\n"
+        f"📌 *Seu país:* {pricing.get_country_flag(sel)} {pricing.get_country_name(sel)}\n"
+        f"🗺️ *Total:* {len(countries_with_status)} países"
     )
 
     await reply_func(
@@ -109,20 +108,38 @@ def _build_country_services(country_code: str):
             return FEATURED_SERVICES.index(code)
         return len(FEATURED_SERVICES) + sorted(all_codes).index(code)
 
-    services_list = []
-    for svc_code in sorted(all_codes, key=order_key):
-        svc_name = pricing.get_service_name(svc_code)
+    from concurrent.futures import ThreadPoolExecutor
+
+    def get_one(svc_code):
         try:
-            price = pricing.calculate_price(svc_code, country_code)
+            return (svc_code, pricing.get_service_name(svc_code),
+                    pricing.calculate_price(svc_code, country_code), status.get(svc_code, 0))
         except Exception:
-            price = 0.0
-        qty = status.get(svc_code, 0)
-        services_list.append((svc_code, svc_name, price, qty))
+            return (svc_code, pricing.get_service_name(svc_code), 0.0, status.get(svc_code, 0))
+
+    codes = sorted(all_codes, key=order_key)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        services_list = list(ex.map(get_one, codes))
     return status, services_list
 
 
 async def country_selected_callback(update: Update, context: CallbackContext):
     """Callback quando um país é selecionado — mostra serviços disponíveis."""
+    query = update.callback_query
+    try:
+        await _do_country_selected(update, context)
+    except Exception as e:
+        logger.error(f"country_selected error: {e}", exc_info=True)
+        try:
+            await query.edit_message_text(
+                "❌ Erro ao carregar serviços. Tente novamente em instantes.",
+                reply_markup=Keyboards.back_to("paises"),
+            )
+        except Exception:
+            pass
+
+
+async def _do_country_selected(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     user = update.effective_user
