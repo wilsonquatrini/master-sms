@@ -505,6 +505,15 @@ class Database:
 
     # ---------- STATS ----------
 
+    def get_total_client_balance(self) -> float:
+        """Soma os saldos positivos dos clientes (custódia que devemos entregar)."""
+        try:
+            with self.session() as s:
+                rows = s.query(User.balance).filter(User.balance > 0).all()
+                return round(sum((r[0] or 0) for r in rows), 2)
+        except Exception:
+            return 0.0
+
     def get_stats(self) -> dict:
         """Estatísticas gerais para admin."""
         with self.session() as s:

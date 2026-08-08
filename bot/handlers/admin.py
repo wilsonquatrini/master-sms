@@ -96,7 +96,29 @@ async def admin_stats_callback(update: Update, context: CallbackContext):
     )
     for provider_name, bal in balances.items():
         bal_str = f"${bal:.2f}" if bal is not None else "❌ erro"
-        text += f"• {escape(provider_name)}: <b>{bal_str}</b>\\n"
+        text += f"• {escape(provider_name)}: <b>{bal_str}</b>\n"
+
+    # --- Financeiro (custódia + base x real x venda; NÃO trava venda) ---
+    client_balance = await asyncio.to_thread(db.get_total_client_balance)
+    provider_brl = total_provider_balance * 5.50
+    try:
+        wa_base = await asyncio.to_thread(pricing.get_base_price, 'wa')
+        wa_real = await asyncio.to_thread(pricing.get_real_cost_brl, 'wa')
+        wa_price = await asyncio.to_thread(pricing.calculate_price, 'wa')
+    except Exception:
+        wa_base = wa_real = wa_price = 0.0
+    wa_base_brl = wa_base * 5.50
+    margem = ((wa_price - wa_real) / wa_real * 100) if wa_real > 0 else 0
+    cobertura = "OK ✅" if provider_brl >= client_balance else "REVER ⚠️ (clientes > provider)"
+    text += (
+        f"\n💰 <b>Financeiro</b>\n"
+        f"• Providers (R$): <b>R$ {provider_brl:.2f}</b>\n"
+        f"• Clientes em custódia: <b>R$ {client_balance:.2f}</b>\n"
+        f"• Cobertura: {cobertura}\n"
+        f"\n📱 <b>WhatsApp BR (exemplo)</b>\n"
+        f"• Base: R$ {wa_base_brl:.2f} | Real(-{int(Config.LOYALTY_DISCOUNT*100)}%): <b>R$ {wa_real:.2f}</b>\n"
+        f"• Venda: <b>R$ {wa_price:.2f}</b> | Margem: <b>{margem:.0f}%</b>\n"
+    )
 
     await query.edit_message_text(
         text,

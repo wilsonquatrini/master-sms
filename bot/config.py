@@ -99,6 +99,9 @@ class Config:
             _k, _v = _kv.strip().split(':', 1)
             MARKUP_BY_COUNTRY[_k] = float(_v)
 
+    # Desconto de fidelidade do provider (0 = nenhum, 0.60 = 60%). Reduz o CUSTO REAL.
+    LOYALTY_DISCOUNT = float(os.getenv('LOYALTY_DISCOUNT', '0.10'))
+
     # ---------- Suporte ----------
     SUPPORT_USERNAME = os.getenv('SUPPORT_USERNAME', '')
 

@@ -219,6 +219,15 @@ class PricingEngine:
             result.append((svc_code, svc_name, price, qty))
         return result
 
+    def get_real_cost_brl(self, service: str, country: str = '24') -> float:
+        """
+        Custo REAL em R$ (com o desconto de fidelidade):
+        = base_cost * (1 - LOYALTY_DISCOUNT) * taxa.
+        O desconto da fidelidade = margem extra pura.
+        """
+        base = self.get_base_price(service, country) or 0
+        return base * (1 - Config.LOYALTY_DISCOUNT) * USD_TO_BRL
+
     def get_provider_details(self, service: str, country: str = '24') -> dict:
         """
         Retorna detalhes de preço por provider para um serviço+país.
@@ -231,8 +240,11 @@ class PricingEngine:
             'prices_by_provider': prices,
             'min_price_usd': min_p,
             'max_price_usd': max_p,
+            'base_cost_brl': (max_p or 0) * USD_TO_BRL,
+            'real_cost_brl': self.get_real_cost_brl(service, country),
             'sell_price_brl': self.calculate_price(service, country),
             'markup': self.get_markup(service, country),
+            'loyalty_discount': Config.LOYALTY_DISCOUNT,
         }
 
 
