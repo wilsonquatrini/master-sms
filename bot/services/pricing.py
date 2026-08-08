@@ -91,8 +91,8 @@ COUNTRIES = {
     '21': 'Polônia',
 }
 
-# Taxa de câmbio USD -> BRL
-USD_TO_BRL = 5.50
+# Taxa de câmbio USD -> BRL (vem do Config, atualizável por env USD_TO_BRL)
+USD_TO_BRL = Config.USD_TO_BRL
 
 # Bandeiras dos países (emoji) — exibidas na interface, igual ao Notz
 COUNTRY_FLAGS = {
@@ -221,12 +221,12 @@ class PricingEngine:
 
     def get_real_cost_brl(self, service: str, country: str = '24') -> float:
         """
-        Custo REAL em R$ (com o desconto de fidelidade):
-        = base_cost * (1 - LOYALTY_DISCOUNT) * taxa.
-        O desconto da fidelidade = margem extra pura.
+        Custo REAL em R$ (com desconto de fidelidade + taxa de carregamento cripto):
+        = base_cost * (1 - LOYALTY_DISCOUNT) * (1 + LOADING_FEE) * taxa.
+        O desconto da fidelidade = margem extra; a taxa de carregamento = custo.
         """
         base = self.get_base_price(service, country) or 0
-        return base * (1 - Config.LOYALTY_DISCOUNT) * USD_TO_BRL
+        return base * (1 - Config.LOYALTY_DISCOUNT) * (1 + Config.LOADING_FEE) * USD_TO_BRL
 
     def get_provider_details(self, service: str, country: str = '24') -> dict:
         """

@@ -101,6 +101,10 @@ class Config:
 
     # Desconto de fidelidade do provider (0 = nenhum, 0.60 = 60%). Reduz o CUSTO REAL.
     LOYALTY_DISCOUNT = float(os.getenv('LOYALTY_DISCOUNT', '0.10'))
+    # Custo de carregar saldo no provider via cripto (taxa, ex: 2% = 0.02)
+    LOADING_FEE = float(os.getenv('LOADING_FEE', '0.02'))
+    # Cotação do dólar (USD->BRL) — atualizar conforme o mercado
+    USD_TO_BRL = float(os.getenv('USD_TO_BRL', '5.50'))
 
     # ---------- Suporte ----------
     SUPPORT_USERNAME = os.getenv('SUPPORT_USERNAME', '')
